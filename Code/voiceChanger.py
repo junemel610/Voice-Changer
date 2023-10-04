@@ -1,6 +1,9 @@
 import tkinter as tk
 from tkinter import filedialog
-from pydub import AudioSegment
+import librosa
+import librosa.display
+import matplotlib.pyplot as plt
+import numpy as np
 
 class VoiceChangerApp:
     def __init__(self, root):
@@ -34,7 +37,7 @@ class VoiceChangerApp:
         if self.file_path is not None:
             try:
                 pitch_scale_factor = float(self.pitch_scale_entry.get())
-                changed_audio = self.apply_pitch_scaling(self.file_path, pitch_scale_factor)
+                changed_audio_path = self.apply_pitch_scaling(self.file_path, pitch_scale_factor)
                 tk.messagebox.showinfo("Success", "Pitch changed successfully!")
             except ValueError:
                 tk.messagebox.showerror("Error", "Invalid pitch scaling factor. Please enter a valid number.")
@@ -42,17 +45,19 @@ class VoiceChangerApp:
             tk.messagebox.showerror("Error", "Please select an audio file first.")
 
     def apply_pitch_scaling(self, audio_path, factor):
-        sound = AudioSegment.from_file(audio_path)
-        sound = sound._spawn(sound.raw_data, overrides={
-            "frame_rate": int(sound.frame_rate * factor)
-        })
+        # Load audio file
+        y, sr = librosa.load(audio_path)
+
+        # Apply pitch scaling
+        y_shifted = librosa.effects.pitch_shift(y, sr, n_steps=factor)
+
+        # Save the changed audio
         changed_audio_path = "changed_audio.wav"
-        sound.export(changed_audio_path, format="wav")
+        librosa.output.write_wav(changed_audio_path, y_shifted, sr)
+        
         return changed_audio_path
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = VoiceChangerApp(root)
     root.mainloop()
-
-# There are errors in Import
